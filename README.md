@@ -85,7 +85,7 @@ With Phase 2, VeriShield transitions from a simple skeleton to a fully-functiona
 1. **Clone the Repo**  
    ```bash
    git clone https://github.com/Harshil7875/VeriShield-AI-Financial-Verification-Platform.git
-   cd VeriShield
+   cd VeriShield-AI-Financial-Verification-Platform
    ```
 
 2. **Run Docker Compose**  
