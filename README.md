@@ -154,7 +154,6 @@ This project is available under the **[MIT License](LICENSE)**. Feel free to use
 
 For questions, feature requests, or contributions:
 
-- **Repo Issues**: [GitHub Issues](https://github.com/your-org/VeriShield/issues)  
 - **Maintainer**: [harshilbhandari01@gmail.com](mailto:harshilbhandari01@gmail.com)
 
 I welcome **feedback** and **pull requests** to drive innovation in financial identity verification, fraud detection, and risk assessment. **Happy building!**
