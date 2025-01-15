@@ -1,0 +1,164 @@
+# -----------------------------
+#  Python
+# -----------------------------
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test / coverage reports
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+
+# Virtual Environments
+venv/
+env/
+.dev_env/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# -----------------------------
+#  macOS
+# -----------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# -----------------------------
+#  Visual Studio Code
+# -----------------------------
+.vscode/
+*.code-workspace
+
+# -----------------------------
+#  IDEs / Editors
+# -----------------------------
+# JetBrains
+*.idea/
+*.iml
+out/
+
+# Eclipse
+.project
+.classpath
+.csettings
+.settings/
+loadtest.launch
+.project
+
+# NetBeans
+.nb-gradle/
+build/
+nbproject/
+
+# Vim
+*.swp
+*.swo
+.sess
+*.viminfo
+*.vimswap
+*.vimbak
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+# -----------------------------
+#  Docker
+# -----------------------------
+# Docker volumes or other transient Docker files
+docker-compose.override.yml
+docker-compose.*.yml
+.dockerignore
+docker-compose.log
+*docker-compose*.log
+
+# Local DB volumes (example for Postgres and Neo4j)
+postgres_data/
+neo4j_data/
+mysql_data/
+redis_data/
+
+# Docker logs or run artifacts
+dockerlogs/
+.docker/
+*.log
+
+# -----------------------------
+#  Environment Files
+# -----------------------------
+# If you have environment variables or secrets in a .env file
+.env
+.env.*
+*.secret
+
+# -----------------------------
+#  OS Generated Files
+# -----------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# -----------------------------
+#  Other Logs & Temp Files
+# -----------------------------
+*.log
+*.temp
+*.tmp
+*.bak
+docs/
+*.old
+
+# -----------------------------
+#  Yarn / Node (if you have frontend or some Node scripts)
+# -----------------------------
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+
+# -----------------------------
+#  End of File
+# -----------------------------
