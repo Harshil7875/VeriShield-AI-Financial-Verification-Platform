@@ -1,3 +1,5 @@
+# docker-compose.yml
+
 services:
   postgres:
     image: postgres:15
@@ -33,9 +35,11 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - ./backend/.env
+      - ./backend/.env   # or remove if you don't have a .env
+    # Optional volume so changes in 'backend/' appear live in the container:
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
+    # If you prefer using the Dockerfile’s CMD, remove this line:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 volumes:

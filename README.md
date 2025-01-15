@@ -11,13 +11,14 @@ VeriShield is an **open-source initiative** to build a **modular, scalable**, an
    - [Core Objectives](#core-objectives)  
    - [Targeted Real-World Applications](#targeted-real-world-applications)  
 3. [Features (Phase 1)](#features-phase-1)  
-4. [Quick Start](#quick-start)  
-5. [Requirements](#requirements)  
-6. [Testing](#testing)  
-7. [Project Structure](#project-structure)  
-8. [Roadmap](#roadmap)  
-9. [License](#license)  
-10. [Contact](#contact)  
+4. [Features (Phase 2)](#features-phase-2)  
+5. [Quick Start](#quick-start)  
+6. [Requirements](#requirements)  
+7. [Testing](#testing)  
+8. [Project Structure](#project-structure)  
+9. [Roadmap](#roadmap)  
+10. [License](#license)  
+11. [Contact](#contact)  
 
 ---
 
@@ -61,6 +62,24 @@ Ultimately, **VeriShield** forms a foundation for **community contributions** to
 
 ---
 
+## Features (Phase 2)
+
+- **CRUD Endpoints**: Implemented **User** and **Business** create/read/update/verify endpoints with **FastAPI**.  
+- **Database Integration**:  
+  - **SQLAlchemy** models (`User`, `Business`) for PostgreSQL.  
+  - Basic Neo4j driver setup for future graph enhancements.  
+- **Secure Password Handling**:  
+  - Passwords are stored as **hashed** strings using **Passlib** (bcrypt).  
+  - Easy to expand for more advanced authentication flows.  
+- **Expanded Testing**:  
+  - Integration tests verifying CRUD endpoints, duplicates, and not-found scenarios.  
+  - Tests can now run inside **Docker** (ensuring consistent environment) or locally.  
+- **Seed Script**: A standalone `seed_data.py` (using **Faker**) to generate realistic users/businesses, optionally seeding Neo4j.
+
+With Phase 2, VeriShield transitions from a simple skeleton to a fully-functional RESTful backend for user/business management—paving the way for advanced features in upcoming phases (like Kafka, ML, and graph queries).
+
+---
+
 ## Quick Start
 
 1. **Clone the Repo**  
@@ -77,7 +96,7 @@ Ultimately, **VeriShield** forms a foundation for **community contributions** to
 
 3. **Check the Health Endpoint**  
    - Navigate to [http://localhost:8000/health](http://localhost:8000/health).  
-   - Expected response: `{"status": "OK"}`
+   - Expected response: `{"status":"OK"}`
 
 ---
 
@@ -96,19 +115,23 @@ Ultimately, **VeriShield** forms a foundation for **community contributions** to
 
 - **With Docker**  
   ```bash
+  # From the project root:
   docker compose run backend pytest --maxfail=1 --disable-warnings -v
   ```
 
 - **Locally**  
-  ```bash
-  # Install dependencies:
-  cd backend
-  pip install -r requirements.txt
-  
-  # Run tests:
-  cd ..
-  python -m pytest backend/tests --maxfail=1 --disable-warnings -v
-  ```
+  1. Install dependencies:
+     ```bash
+     cd backend
+     pip install -r requirements.txt
+     ```
+  2. Run tests:
+     ```bash
+     cd ..
+     python -m pytest backend/tests --maxfail=1 --disable-warnings -v
+     ```
+
+If you have issues with local vs. Docker networking, you can run **all** tests inside Docker to ensure the same environment.
 
 ---
 
@@ -118,24 +141,31 @@ Ultimately, **VeriShield** forms a foundation for **community contributions** to
 VeriShield/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py         # FastAPI app w/ health endpoint
+│   │   ├── main.py         # FastAPI app w/ CRUD endpoints
+│   │   ├── models.py       # SQLAlchemy models (User, Business)
+│   │   ├── database.py     # Postgres + Neo4j config
+│   │   ├── crud.py         # Encapsulated DB logic
+│   │   ├── schemas.py      # Pydantic schemas for request/response
 │   │   └── __init__.py
 │   ├── tests/
-│   │   └── test_main.py    # Basic health-check test
+│   │   └── test_main.py    # Integration tests
 │   ├── Dockerfile
-│   └── requirements.txt
-├── docker-compose.yml       # Defines local dev environment
+│   ├── requirements.txt
+│   └── __init__.py
+├── docker-compose.yml
+├── scripts/
+│   └── seed_data.py        # Faker-based seeding script
 ├── .gitignore
 ├── .dockerignore
 ├── LICENSE
-└── README.md                # This file
+└── README.md               # You're reading it now
 ```
 
 ---
 
 ## Roadmap
 
-1. **Phase 2**: CRUD endpoints, user/business data models, secure password handling, SQLAlchemy.  
+1. **Phase 2**: (Completed) CRUD endpoints, secure password handling, SQLAlchemy.  
 2. **Phase 3**: Kafka event-driven architecture for async verification workflows.  
 3. **Phase 4**: Machine learning integration for risk scoring.  
 4. **Phase 5**: Knowledge graph enhancements (Neo4j) for advanced fraud detection.  

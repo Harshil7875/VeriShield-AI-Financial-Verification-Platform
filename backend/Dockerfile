@@ -1,19 +1,25 @@
-# Use an official Python image that supports arm64 (3.11-slim-bullseye often works well)
+# backend/Dockerfile
+
+# Use a Python 3.11 slim image
 FROM python:3.11-slim-bullseye
 
-# Set the working directory
+# First, we'll create a working directory at /app
 WORKDIR /app
 
-# Copy requirements and install them
+# Copy only requirements.txt first, to leverage Docker caching
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
-COPY app ./app
-COPY tests ./tests
+# Now copy the entire 'backend' folder (which includes app/, tests/, etc.) to /app/backend
+COPY . /app/backend
 
-# Expose the FastAPI default port
+# Switch working directory to /app/backend, so that
+#   'backend.app' references match the container's directory layout
+WORKDIR /app/backend
+
+# Expose the FastAPI default port (optional, but good practice)
 EXPOSE 8000
 
-# Default command (overridden by docker-compose command)
+# Default command to run the FastAPI app; Docker Compose can override if needed
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
