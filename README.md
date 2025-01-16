@@ -12,13 +12,14 @@ VeriShield is an **open-source initiative** to build a **modular, scalable**, an
    - [Targeted Real-World Applications](#targeted-real-world-applications)  
 3. [Features (Phase 1)](#features-phase-1)  
 4. [Features (Phase 2)](#features-phase-2)  
-5. [Quick Start](#quick-start)  
-6. [Requirements](#requirements)  
-7. [Testing](#testing)  
-8. [Project Structure](#project-structure)  
-9. [Roadmap](#roadmap)  
-10. [License](#license)  
-11. [Contact](#contact)  
+5. [Quick Start (Docker-Only)](#quick-start-docker-only)  
+6. [Testing (Docker-Only)](#testing-docker-only)  
+7. [Seeding Data (Optional)](#seeding-data-optional)  
+8. [Requirements](#requirements)  
+9. [Project Structure](#project-structure)  
+10. [Roadmap](#roadmap)  
+11. [License](#license)  
+12. [Contact](#contact)
 
 ---
 
@@ -69,76 +70,109 @@ Ultimately, **VeriShield** forms a foundation for **community contributions** to
   - **SQLAlchemy** models (`User`, `Business`) for PostgreSQL.  
   - Basic Neo4j driver setup for future graph enhancements.  
 - **Secure Password Handling**:  
-  - Passwords are stored as **hashed** strings using **Passlib** (bcrypt).  
+  - Passwords are stored as **hashed** strings (bcrypt via **Passlib**).  
   - Easy to expand for more advanced authentication flows.  
 - **Expanded Testing**:  
-  - Integration tests verifying CRUD endpoints, duplicates, and not-found scenarios.  
-  - Tests can now run inside **Docker** (ensuring consistent environment) or locally.  
-- **Seed Script**: A standalone `seed_data.py` (using **Faker**) to generate realistic users/businesses, optionally seeding Neo4j.
+  - Integration tests verifying CRUD endpoints (duplicates, not-found, success).  
+  - Tests can now run **inside Docker** or locally.  
+- **Seed Script**: A standalone `seed_data.py` (using **Faker**) to generate realistic user/business data, optionally seeding Neo4j.
 
-With Phase 2, VeriShield transitions from a simple skeleton to a fully-functional RESTful backend for user/business management—paving the way for advanced features in upcoming phases (like Kafka, ML, and graph queries).
+With Phase 2, VeriShield transitions from a simple skeleton to a fully-functional RESTful backend for user/business management—paving the way for advanced features in upcoming phases (Kafka, ML, and deeper graph queries).
 
 ---
 
-## Quick Start
+## Quick Start (Docker-Only)
+
+Here’s a concise workflow to **spin up** VeriShield entirely in Docker (no local Python needed):
 
 1. **Clone the Repo**  
    ```bash
    git clone https://github.com/Harshil7875/VeriShield-AI-Financial-Verification-Platform.git
    cd VeriShield-AI-Financial-Verification-Platform
    ```
+2. **(Optional) Remove Obsolete `version:`**  
+   - In `docker-compose.yml`, you might see `version: "3.9"`. For Docker Compose V2, it’s no longer needed.  
+   - **Remove** or **comment out** that line to avoid the “obsolete” warning.
 
-2. **Run Docker Compose**  
+3. **Build & Start Containers**  
    ```bash
-   docker compose up --build -d
+   docker compose up -d --build
    ```
-   - Spins up **PostgreSQL** (port 5432), **Neo4j** (ports 7474 & 7687), and the **FastAPI** service (port 8000).
+   - **`-d`**: Detached mode (runs in the background).  
+   - **`--build`**: Force-rebuild images from the Dockerfile.
 
-3. **Check the Health Endpoint**  
-   - Navigate to [http://localhost:8000/health](http://localhost:8000/health).  
-   - Expected response: `{"status":"OK"}`
+4. **Check Container Status**  
+   ```bash
+   docker compose ps
+   ```
+   - Should show `backend` (FastAPI), `postgres` (healthy), and `neo4j` (running).
+
+5. **Visit the Health Endpoint**  
+   - Go to [http://localhost:8000/health](http://localhost:8000/health).  
+   - Expected JSON: `{"status":"OK"}`
+
+---
+
+## Testing (Docker-Only)
+
+All tests can be run **inside** the Docker container, eliminating any local environment quirks:
+
+1. **Exec Into the Backend Container**  
+   ```bash
+   docker compose exec backend /bin/bash
+   ```
+   - Note: Here, `backend` is the **service name** in `docker-compose.yml`.
+
+2. **Run Pytest**  
+   ```bash
+   pytest --cov=app --cov-report=term-missing
+   ```
+   - This runs all tests in the `/app/backend/tests` folder, connecting to Postgres (`host=postgres`) internally.  
+   - You should see a passing test suite with coverage details.
+
+3. **(Optional) Inspect Coverage Warnings**  
+   - Common warnings: 
+     - `MovedIn20Warning` (SQLAlchemy 2.0 changes)  
+     - `DeprecationWarning` (Passlib crypt or Neo4j driver)  
+   - These are not errors; future library upgrades will remove them.
+
+---
+
+## Seeding Data (Optional)
+
+If you’d like to populate **Postgres** (and optionally **Neo4j**) with **dummy** users/businesses:
+
+1. **Inside the Backend Container**  
+   ```bash
+   docker compose exec backend /bin/bash
+   ```
+2. **Run the Seed Script**  
+   ```bash
+   cd scripts
+   python seed_data.py 10 15 True
+   ```
+   - **`10`**: Number of users to generate.  
+   - **`15`**: Number of businesses to generate.  
+   - **`True`**: Whether to also seed Neo4j.  
+   - This also re-creates any missing tables, then inserts random data via **Faker**.
 
 ---
 
 ## Requirements
 
-- **Docker Desktop** (or Docker Engine + `docker compose`)  
-- **Python 3.11+** (if running tests locally without Docker)  
+- **Docker Desktop** (or Docker Engine + Compose)  
 - **Git** for version control  
-- *(Optional)* **Conda/virtualenv** for local Python environment isolation  
+- *(Optional)* **Python 3.11+** if you want to test or run scripts locally.  
+- *(Optional)* **Conda/virtualenv** for local Python environment isolation.
 
-> **Apple Silicon Users**: Ensure images support `arm64` or set `platform: linux/amd64` in `docker-compose.yml` where needed.
-
----
-
-## Testing
-
-- **With Docker**  
-  ```bash
-  # From the project root:
-  docker compose run backend pytest --maxfail=1 --disable-warnings -v
-  ```
-
-- **Locally**  
-  1. Install dependencies:
-     ```bash
-     cd backend
-     pip install -r requirements.txt
-     ```
-  2. Run tests:
-     ```bash
-     cd ..
-     python -m pytest backend/tests --maxfail=1 --disable-warnings -v
-     ```
-
-If you have issues with local vs. Docker networking, you can run **all** tests inside Docker to ensure the same environment.
+> **Apple Silicon (M1/M2)**: The images used (`postgres:15`, `neo4j:5`, `python:3.11-slim-bullseye`) support `arm64`. If you face issues, consider specifying `platform: linux/amd64` in `docker-compose.yml`.
 
 ---
 
 ## Project Structure
 
 ```
-VeriShield/
+VeriShield-AI-Financial-Verification-Platform/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py         # FastAPI app w/ CRUD endpoints
@@ -149,34 +183,34 @@ VeriShield/
 │   │   └── __init__.py
 │   ├── tests/
 │   │   └── test_main.py    # Integration tests
+│   ├── scripts/
+│   │   └── seed_data.py    # Faker-based data seeding script
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── __init__.py
 ├── docker-compose.yml
-├── scripts/
-│   └── seed_data.py        # Faker-based seeding script
 ├── .gitignore
 ├── .dockerignore
 ├── LICENSE
-└── README.md               # You're reading it now
+└── README.md
 ```
 
 ---
 
 ## Roadmap
 
-1. **Phase 2**: (Completed) CRUD endpoints, secure password handling, SQLAlchemy.  
-2. **Phase 3**: Kafka event-driven architecture for async verification workflows.  
-3. **Phase 4**: Machine learning integration for risk scoring.  
-4. **Phase 5**: Knowledge graph enhancements (Neo4j) for advanced fraud detection.  
-5. **Phase 6**: Cloud deployment (AWS), CI/CD pipelines, security hardening.  
-6. **Phase 7**: Full observability with metrics, logs, and alerting.
+1. **Phase 2**: (Done) CRUD endpoints, secure password handling, tests, seeding script.  
+2. **Phase 3**: Event-driven architecture with **Kafka** for asynchronous verification workflows.  
+3. **Phase 4**: **Machine Learning** integration for risk scoring.  
+4. **Phase 5**: Advanced **Neo4j** usage for graph-based fraud detection.  
+5. **Phase 6**: Cloud deployment (AWS) with scaling and CI/CD pipelines.  
+6. **Phase 7**: Observability (metrics, logs, alerts) and performance tuning.
 
 ---
 
 ## License
 
-This project is available under the **[MIT License](LICENSE)**. Feel free to use, modify, and distribute in compliance with the license terms.
+This project is available under the **[MIT License](LICENSE)**. Feel free to use, modify, and distribute under the license terms.
 
 ---
 
@@ -186,4 +220,4 @@ For questions, feature requests, or contributions:
 
 - **Maintainer**: [harshilbhandari01@gmail.com](mailto:harshilbhandari01@gmail.com)
 
-I welcome **feedback** and **pull requests** to drive innovation in financial identity verification, fraud detection, and risk assessment. **Happy building!**
+We welcome **feedback** and **pull requests** to drive innovation in financial identity verification, fraud detection, and risk assessment. **Happy building!**

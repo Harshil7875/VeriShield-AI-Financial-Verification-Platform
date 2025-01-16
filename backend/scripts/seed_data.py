@@ -15,8 +15,8 @@ from passlib.context import CryptContext
 # Adjust Python path to recognize 'app' package if needed
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from backend.app.database import SessionLocal, engine, Base, driver
-from backend.app.models import User, Business
+from app.database import SessionLocal, engine, Base, driver
+from app.models import User, Business
 
 # Initialize Faker
 fake = Faker()

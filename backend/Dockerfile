@@ -1,25 +1,23 @@
 # backend/Dockerfile
 
-# Use a Python 3.11 slim image
 FROM python:3.11-slim-bullseye
 
-# First, we'll create a working directory at /app
+# 1) Create a working directory at /app
 WORKDIR /app
 
-# Copy only requirements.txt first, to leverage Docker caching
+# 2) Copy in requirements first, to leverage Docker caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Now copy the entire 'backend' folder (which includes app/, tests/, etc.) to /app/backend
+# 3) Copy the rest of the backend code into the container
 COPY . /app/backend
 
-# Switch working directory to /app/backend, so that
-#   'backend.app' references match the container's directory layout
+# 4) Switch into /app/backend so all "app.*" references work
 WORKDIR /app/backend
 
-# Expose the FastAPI default port (optional, but good practice)
+# 5) Expose FastAPI port (optional)
 EXPOSE 8000
 
-# Default command to run the FastAPI app; Docker Compose can override if needed
+# 6) Default command is uvicorn, but overridden by docker-compose.yml if needed
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

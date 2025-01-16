@@ -1,5 +1,3 @@
-# docker-compose.yml
-
 services:
   postgres:
     image: postgres:15
@@ -13,6 +11,13 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Healthcheck to make Postgres “healthy” only after it's fully ready:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   neo4j:
     image: neo4j:5
@@ -29,17 +34,25 @@ services:
   backend:
     build: ./backend
     container_name: veri_backend
+    restart: unless-stopped
+
+    # IMPORTANT: Wait for Postgres to be “healthy” before starting
     depends_on:
-      - postgres
-      - neo4j
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_started
+
     ports:
       - "8000:8000"
-    env_file:
-      - ./backend/.env   # or remove if you don't have a .env
-    # Optional volume so changes in 'backend/' appear live in the container:
+    # Optional: if you have a .env in backend, you can uncomment:
+    # env_file:
+    #   - ./backend/.env
+    # volume mount your backend code so changes reflect in container (dev mode)
     volumes:
       - ./backend:/app/backend
-    # If you prefer using the Dockerfile’s CMD, remove this line:
+
+    # Command to run FastAPI
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 volumes:
