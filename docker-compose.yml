@@ -1,4 +1,7 @@
 services:
+  # ----------------
+  #   Postgres
+  # ----------------
   postgres:
     image: postgres:15
     container_name: veri_postgres
@@ -11,7 +14,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # Healthcheck to make Postgres “healthy” only after it's fully ready:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
       interval: 5s
@@ -19,6 +21,9 @@ services:
       retries: 5
       start_period: 5s
 
+  # ----------------
+  #   Neo4j
+  # ----------------
   neo4j:
     image: neo4j:5
     container_name: veri_neo4j
@@ -31,29 +36,77 @@ services:
     volumes:
       - neo4j_data:/data
 
+  # ----------------
+  #   Zookeeper
+  # ----------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2
+    container_name: veri_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  # ----------------
+  #   Kafka
+  # ----------------
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    # container_name: veri_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+  # ----------------
+  #   Backend (FastAPI)
+  # ----------------
   backend:
     build: ./backend
     container_name: veri_backend
     restart: unless-stopped
-
-    # IMPORTANT: Wait for Postgres to be “healthy” before starting
     depends_on:
       postgres:
         condition: service_healthy
       neo4j:
         condition: service_started
-
+      kafka:
+        condition: service_started
     ports:
       - "8000:8000"
-    # Optional: if you have a .env in backend, you can uncomment:
-    # env_file:
-    #   - ./backend/.env
-    # volume mount your backend code so changes reflect in container (dev mode)
+    env_file:
+      - .env
     volumes:
       - ./backend:/app/backend
-
-    # Command to run FastAPI
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  # ----------------
+  #   Consumer Service
+  # ----------------
+  consumer:
+    image: verishield-ai-financial-verification-platform-backend
+    container_name: veri_consumer
+    depends_on:
+      kafka:
+        condition: service_healthy  # waits for Kafka's health check
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    command: python -u -m app.kafka_consumer
 
 volumes:
   postgres_data:

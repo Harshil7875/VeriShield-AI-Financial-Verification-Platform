@@ -5,6 +5,9 @@ FROM python:3.11-slim-bullseye
 # 1) Create a working directory at /app
 WORKDIR /app
 
+# 1a) (NEW) Install system packages for debugging
+RUN apt-get update && apt-get install -y iputils-ping netcat
+
 # 2) Copy in requirements first, to leverage Docker caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \

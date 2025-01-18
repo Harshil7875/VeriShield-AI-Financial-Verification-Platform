@@ -12,14 +12,15 @@ VeriShield is an **open-source initiative** to build a **modular, scalable**, an
    - [Targeted Real-World Applications](#targeted-real-world-applications)  
 3. [Features (Phase 1)](#features-phase-1)  
 4. [Features (Phase 2)](#features-phase-2)  
-5. [Quick Start (Docker-Only)](#quick-start-docker-only)  
-6. [Testing (Docker-Only)](#testing-docker-only)  
-7. [Seeding Data (Optional)](#seeding-data-optional)  
-8. [Requirements](#requirements)  
-9. [Project Structure](#project-structure)  
-10. [Roadmap](#roadmap)  
-11. [License](#license)  
-12. [Contact](#contact)
+5. [Features (Phase 3)](#features-phase-3)  
+6. [Quick Start (Docker-Only)](#quick-start-docker-only)  
+7. [Testing (Docker-Only)](#testing-docker-only)  
+8. [Seeding Data (Optional)](#seeding-data-optional)  
+9. [Requirements](#requirements)  
+10. [Project Structure](#project-structure)  
+11. [Roadmap](#roadmap)  
+12. [License](#license)  
+13. [Contact](#contact)
 
 ---
 
@@ -77,7 +78,23 @@ Ultimately, **VeriShield** forms a foundation for **community contributions** to
   - Tests can now run **inside Docker** or locally.  
 - **Seed Script**: A standalone `seed_data.py` (using **Faker**) to generate realistic user/business data, optionally seeding Neo4j.
 
-With Phase 2, VeriShield transitions from a simple skeleton to a fully-functional RESTful backend for user/business management—paving the way for advanced features in upcoming phases (Kafka, ML, and deeper graph queries).
+---
+
+## Features (Phase 3)
+
+- **Event-Driven Architecture (Kafka)**: 
+  - **Decoupled** identity checks via **Kafka**. When a new user is created, the main API publishes a `"user_created"` event, and a separate **consumer** handles verification asynchronously.  
+  - **Producer & Consumer**:  
+    - The FastAPI app (producer) sends events to Kafka for `user_created`, `user_verified`, etc.  
+    - A dedicated **consumer** service subscribes to these topics and updates user records in the background.  
+  - **Retries & DLQ**:  
+    - Both the producer and the consumer implement a **retry mechanism**.  
+    - If retries fail, messages go to a **dead-letter queue (DLQ)** topic (`verishield_dlq`) for manual review.  
+- **Full Test Coverage**:  
+  - Integration test (`test_kafka_user_created_flow`) confirms the consumer picks up new user events and sets `is_verified=true`.  
+  - Demonstrates asynchronous verification in action.
+
+With Phase 3, VeriShield embraces a **scalable**, **non-blocking** approach to verification—users can be created instantly, while the consumer updates their verification status in the background.
 
 ---
 
@@ -90,26 +107,48 @@ Here’s a concise workflow to **spin up** VeriShield entirely in Docker (no loc
    git clone https://github.com/Harshil7875/VeriShield-AI-Financial-Verification-Platform.git
    cd VeriShield-AI-Financial-Verification-Platform
    ```
-2. **(Optional) Remove Obsolete `version:`**  
-   - In `docker-compose.yml`, you might see `version: "3.9"`. For Docker Compose V2, it’s no longer needed.  
-   - **Remove** or **comment out** that line to avoid the “obsolete” warning.
 
-3. **Build & Start Containers**  
+2. **Build & Start Containers**  
    ```bash
    docker compose up -d --build
    ```
    - **`-d`**: Detached mode (runs in the background).  
    - **`--build`**: Force-rebuild images from the Dockerfile.
 
-4. **Check Container Status**  
+3. **Check Container Status**  
    ```bash
    docker compose ps
    ```
-   - Should show `backend` (FastAPI), `postgres` (healthy), and `neo4j` (running).
+   - You should see `backend`, `consumer`, `postgres`, `neo4j`, `kafka`, and `zookeeper`.
 
-5. **Visit the Health Endpoint**  
+4. **Visit the Health Endpoint**  
    - Go to [http://localhost:8000/health](http://localhost:8000/health).  
    - Expected JSON: `{"status":"OK"}`
+
+5. **(Optional) Check Logs**  
+   - **Backend logs**:  
+     ```bash
+     docker compose logs backend -f
+     ```
+   - **Consumer logs**:  
+     ```bash
+     docker compose logs consumer -f
+     ```
+     You should see lines like `"[Consumer] Subscribed to user_created. Waiting for messages..."`.
+
+6. **Create a User (Asynchronous Verification)**  
+   - Use `curl` or Postman to create a user:
+     ```bash
+     curl -X POST -H "Content-Type: application/json" \
+          -d '{"email":"testuser@example.com","password":"somePass123"}' \
+          http://localhost:8000/users
+     ```
+   - The consumer will pick up the `"user_created"` event and set `is_verified=true` in the background.  
+   - Confirm by calling:
+     ```bash
+     curl http://localhost:8000/users/1
+     ```
+     or whichever user ID was returned.
 
 ---
 
@@ -121,20 +160,16 @@ All tests can be run **inside** the Docker container, eliminating any local envi
    ```bash
    docker compose exec backend /bin/bash
    ```
-   - Note: Here, `backend` is the **service name** in `docker-compose.yml`.
 
 2. **Run Pytest**  
    ```bash
    pytest --cov=app --cov-report=term-missing
    ```
-   - This runs all tests in the `/app/backend/tests` folder, connecting to Postgres (`host=postgres`) internally.  
-   - You should see a passing test suite with coverage details.
+   - This runs all tests in `/app/backend/tests`, including the **Kafka** test that verifies asynchronous user checks.
 
-3. **(Optional) Inspect Coverage Warnings**  
-   - Common warnings: 
-     - `MovedIn20Warning` (SQLAlchemy 2.0 changes)  
-     - `DeprecationWarning` (Passlib crypt or Neo4j driver)  
-   - These are not errors; future library upgrades will remove them.
+3. **Check Coverage & Warnings**  
+   - Typical warnings might relate to SQLAlchemy 2.0 deprecations or Passlib crypt.  
+   - These are normal in dev environments.
 
 ---
 
@@ -153,8 +188,9 @@ If you’d like to populate **Postgres** (and optionally **Neo4j**) with **dummy
    ```
    - **`10`**: Number of users to generate.  
    - **`15`**: Number of businesses to generate.  
-   - **`True`**: Whether to also seed Neo4j.  
-   - This also re-creates any missing tables, then inserts random data via **Faker**.
+   - **`True`**: Seed Neo4j as well.
+
+This re-creates tables if missing and inserts random data via **Faker**.
 
 ---
 
@@ -176,13 +212,16 @@ VeriShield-AI-Financial-Verification-Platform/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py         # FastAPI app w/ CRUD endpoints
+│   │   ├── kafka_consumer.py   # Listens on "user_created" topic
+│   │   ├── kafka_producer.py   # Publishes events to Kafka
 │   │   ├── models.py       # SQLAlchemy models (User, Business)
 │   │   ├── database.py     # Postgres + Neo4j config
 │   │   ├── crud.py         # Encapsulated DB logic
 │   │   ├── schemas.py      # Pydantic schemas for request/response
 │   │   └── __init__.py
 │   ├── tests/
-│   │   └── test_main.py    # Integration tests
+│   │   ├── test_kafka.py   # Integration test for Kafka user-created flow
+│   │   └── test_main.py    # Integration tests for CRUD operations
 │   ├── scripts/
 │   │   └── seed_data.py    # Faker-based data seeding script
 │   ├── Dockerfile
@@ -199,12 +238,11 @@ VeriShield-AI-Financial-Verification-Platform/
 
 ## Roadmap
 
-1. **Phase 2**: (Done) CRUD endpoints, secure password handling, tests, seeding script.  
-2. **Phase 3**: Event-driven architecture with **Kafka** for asynchronous verification workflows.  
-3. **Phase 4**: **Machine Learning** integration for risk scoring.  
-4. **Phase 5**: Advanced **Neo4j** usage for graph-based fraud detection.  
-5. **Phase 6**: Cloud deployment (AWS) with scaling and CI/CD pipelines.  
-6. **Phase 7**: Observability (metrics, logs, alerts) and performance tuning.
+1. **Phase 3**: (Done) Event-driven architecture with **Kafka** for asynchronous verification.  
+2. **Phase 4**: **Machine Learning** integration for risk scoring.  
+3. **Phase 5**: Advanced **Neo4j** usage for graph-based fraud detection.  
+4. **Phase 6**: Cloud deployment (AWS) with scaling and CI/CD pipelines.  
+5. **Phase 7**: Observability (metrics, logs, alerts) and performance tuning.
 
 ---
 
@@ -220,4 +258,4 @@ For questions, feature requests, or contributions:
 
 - **Maintainer**: [harshilbhandari01@gmail.com](mailto:harshilbhandari01@gmail.com)
 
-We welcome **feedback** and **pull requests** to drive innovation in financial identity verification, fraud detection, and risk assessment. **Happy building!**
+I welcome **feedback** and **pull requests** to drive innovation in financial identity verification, fraud detection, and risk assessment. **Happy building!**

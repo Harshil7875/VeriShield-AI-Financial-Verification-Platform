@@ -12,3 +12,4 @@ pytest==7.3.1
 pytest-cov==4.0.0
 requests==2.31.0
 pydantic[email]
+kafka-python==2.0.2
