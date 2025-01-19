@@ -13,14 +13,15 @@ VeriShield is an **open-source initiative** to build a **modular, scalable**, an
 3. [Features (Phase 1)](#features-phase-1)  
 4. [Features (Phase 2)](#features-phase-2)  
 5. [Features (Phase 3)](#features-phase-3)  
-6. [Quick Start (Docker-Only)](#quick-start-docker-only)  
-7. [Testing (Docker-Only)](#testing-docker-only)  
-8. [Seeding Data (Optional)](#seeding-data-optional)  
-9. [Requirements](#requirements)  
-10. [Project Structure](#project-structure)  
-11. [Roadmap](#roadmap)  
-12. [License](#license)  
-13. [Contact](#contact)
+6. [Features (Phase 4)](#features-phase-4)  
+7. [Quick Start (Docker-Only)](#quick-start-docker-only)  
+8. [Testing (Docker-Only)](#testing-docker-only)  
+9. [Seeding Data (Optional)](#seeding-data-optional)  
+10. [Requirements](#requirements)  
+11. [Project Structure](#project-structure)  
+12. [Roadmap](#roadmap)  
+13. [License](#license)  
+14. [Contact](#contact)
 
 ---
 
@@ -82,19 +83,49 @@ Ultimately, **VeriShield** forms a foundation for **community contributions** to
 
 ## Features (Phase 3)
 
-- **Event-Driven Architecture (Kafka)**: 
+- **Event-Driven Architecture (Kafka)**:  
   - **Decoupled** identity checks via **Kafka**. When a new user is created, the main API publishes a `"user_created"` event, and a separate **consumer** handles verification asynchronously.  
-  - **Producer & Consumer**:  
+  - **Producer & Consumer**:
     - The FastAPI app (producer) sends events to Kafka for `user_created`, `user_verified`, etc.  
     - A dedicated **consumer** service subscribes to these topics and updates user records in the background.  
-  - **Retries & DLQ**:  
+  - **Retries & DLQ**:
     - Both the producer and the consumer implement a **retry mechanism**.  
     - If retries fail, messages go to a **dead-letter queue (DLQ)** topic (`verishield_dlq`) for manual review.  
-- **Full Test Coverage**:  
+- **Full Test Coverage**:
   - Integration test (`test_kafka_user_created_flow`) confirms the consumer picks up new user events and sets `is_verified=true`.  
   - Demonstrates asynchronous verification in action.
 
 With Phase 3, VeriShield embraces a **scalable**, **non-blocking** approach to verification—users can be created instantly, while the consumer updates their verification status in the background.
+
+---
+
+## Features (Phase 4)
+
+### Machine Learning Integration & Advanced Fraud Detection
+
+1. **Risk Scoring Service**  
+   - Introduces an **ML pipeline** that assigns risk scores (fraud likelihood) to new users or businesses. This pipeline can be invoked automatically via Kafka events or in a batch process.
+
+2. **`verishield_ml_experiments` Sub-Project**  
+   - A dedicated sub-folder housing advanced experimentation:
+     - **Synthetic Data Generators** (`refined_data_generator.py`) for large-scale user/business datasets with ring leaders, multi-owner relationships, suspicious IP usage, etc.  
+     - **EDA Notebooks** to explore data distributions, missing values, and suspicious signals.  
+     - **Tabular ML Models** (XGBoost & Deep Learning) providing a baseline approach for fraud detection.  
+     - **GNN Workflows** to capture ring-based or multi-owner fraud patterns more effectively than traditional ML.
+
+3. **Integration Flow**  
+   - **Offline Training**:
+     - Use **synthetic** or **real** data to train and tune models (XGBoost, MLP, GNN).  
+     - Save your best model artifacts (`.h5`, `.pt`, or `.pkl`).  
+   - **Online Inference**:
+     - The **Kafka consumer** or a specialized **ML microservice** loads and applies these models in real-time.  
+     - High-risk users or businesses get flagged for manual review, or auto-rejected based on thresholds.
+
+4. **Graph-Based Fraud Detection**  
+   - Phase 5 will integrate **Neo4j** with GNN logic to highlight ring-leader relationships and multi-owner webs.  
+   - The synergy of **ML** + **graph** queries enables deeper detection of collusion or complicated ownership patterns.
+
+With Phase 4, VeriShield layers **data science** onto its event-driven framework, delivering **automated risk scoring** and paving the way for graph-based fraud detection in the next phases.
 
 ---
 
@@ -165,11 +196,10 @@ All tests can be run **inside** the Docker container, eliminating any local envi
    ```bash
    pytest --cov=app --cov-report=term-missing
    ```
-   - This runs all tests in `/app/backend/tests`, including the **Kafka** test that verifies asynchronous user checks.
+   - Runs all tests in `/app/backend/tests`, including the Kafka test for asynchronous user checks.
 
 3. **Check Coverage & Warnings**  
-   - Typical warnings might relate to SQLAlchemy 2.0 deprecations or Passlib crypt.  
-   - These are normal in dev environments.
+   - Some warnings (e.g., SQLAlchemy 2.0 deprecations) are expected in development.
 
 ---
 
@@ -211,22 +241,28 @@ This re-creates tables if missing and inserts random data via **Faker**.
 VeriShield-AI-Financial-Verification-Platform/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py         # FastAPI app w/ CRUD endpoints
+│   │   ├── main.py             # FastAPI app w/ CRUD endpoints
 │   │   ├── kafka_consumer.py   # Listens on "user_created" topic
 │   │   ├── kafka_producer.py   # Publishes events to Kafka
-│   │   ├── models.py       # SQLAlchemy models (User, Business)
-│   │   ├── database.py     # Postgres + Neo4j config
-│   │   ├── crud.py         # Encapsulated DB logic
-│   │   ├── schemas.py      # Pydantic schemas for request/response
+│   │   ├── models.py           # SQLAlchemy models (User, Business)
+│   │   ├── database.py         # Postgres + Neo4j config
+│   │   ├── crud.py             # Encapsulated DB logic
+│   │   ├── schemas.py          # Pydantic schemas for request/response
 │   │   └── __init__.py
 │   ├── tests/
-│   │   ├── test_kafka.py   # Integration test for Kafka user-created flow
-│   │   └── test_main.py    # Integration tests for CRUD operations
+│   │   ├── test_kafka.py       # Integration test for Kafka user-created flow
+│   │   └── test_main.py        # Integration tests for CRUD operations
 │   ├── scripts/
-│   │   └── seed_data.py    # Faker-based data seeding script
+│   │   └── seed_data.py        # Faker-based data seeding script
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── __init__.py
+├── verishield_ml_experiments/  # Synthetic data generation, EDA, ML/GNN code
+│   ├── data_generators/
+│   ├── notebooks/
+│   ├── requirements.txt
+│   ├── README.md
+│   └── ...
 ├── docker-compose.yml
 ├── .gitignore
 ├── .dockerignore
@@ -239,7 +275,7 @@ VeriShield-AI-Financial-Verification-Platform/
 ## Roadmap
 
 1. **Phase 3**: (Done) Event-driven architecture with **Kafka** for asynchronous verification.  
-2. **Phase 4**: **Machine Learning** integration for risk scoring.  
+2. **Phase 4**: **Machine Learning** integration for risk scoring. (**In Progress**)  
 3. **Phase 5**: Advanced **Neo4j** usage for graph-based fraud detection.  
 4. **Phase 6**: Cloud deployment (AWS) with scaling and CI/CD pipelines.  
 5. **Phase 7**: Observability (metrics, logs, alerts) and performance tuning.
@@ -258,4 +294,4 @@ For questions, feature requests, or contributions:
 
 - **Maintainer**: [harshilbhandari01@gmail.com](mailto:harshilbhandari01@gmail.com)
 
-I welcome **feedback** and **pull requests** to drive innovation in financial identity verification, fraud detection, and risk assessment. **Happy building!**
+We welcome **feedback** and **pull requests** to drive innovation in financial identity verification, fraud detection, and risk assessment. **Happy building!**

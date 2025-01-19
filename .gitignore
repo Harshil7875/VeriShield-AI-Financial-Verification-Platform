@@ -1,7 +1,9 @@
-# -----------------------------
-#  Python
-# -----------------------------
-# Byte-compiled / optimized / DLL files
+Below is an **updated** `.gitignore` that preserves your existing rules but adds **common exclusions** for large data artifacts, Jupyter outputs, and ML model files. Adjust any paths or extensions as needed for your specific workflow.
+
+```gitignore
+# ------------------------------------------------------
+#  PYTHON
+# ------------------------------------------------------
 __pycache__/
 *.py[cod]
 *.pyo
@@ -58,22 +60,32 @@ venv.bak/
 .spyderproject
 .spyproject
 
-# -----------------------------
+# ------------------------------------------------------
+#  JUPYTER / IPYNB
+# ------------------------------------------------------
+.ipynb_checkpoints/
+*.nbconvert/
+*.nb.html
+
+# Sometimes notebooks store large outputs:
+*.nb.data
+
+# ------------------------------------------------------
 #  macOS
-# -----------------------------
+# ------------------------------------------------------
 .DS_Store
 .AppleDouble
 .LSOverride
 
-# -----------------------------
+# ------------------------------------------------------
 #  Visual Studio Code
-# -----------------------------
+# ------------------------------------------------------
 .vscode/
 *.code-workspace
 
-# -----------------------------
+# ------------------------------------------------------
 #  IDEs / Editors
-# -----------------------------
+# ------------------------------------------------------
 # JetBrains
 *.idea/
 *.iml
@@ -89,7 +101,6 @@ loadtest.launch
 
 # NetBeans
 .nb-gradle/
-build/
 nbproject/
 
 # Vim
@@ -104,61 +115,87 @@ nbproject/
 *.sublime-project
 *.sublime-workspace
 
-# -----------------------------
-#  Docker
-# -----------------------------
-# Docker volumes or other transient Docker files
+# ------------------------------------------------------
+#  DOCKER
+# ------------------------------------------------------
 docker-compose.override.yml
 docker-compose.*.yml
 .dockerignore
 docker-compose.log
 *docker-compose*.log
+dockerlogs/
+.docker/
+*.log
 
-# Local DB volumes (example for Postgres and Neo4j)
+# Local DB volumes (examples)
 postgres_data/
 neo4j_data/
 mysql_data/
 redis_data/
 
-# Docker logs or run artifacts
-dockerlogs/
-.docker/
-*.log
-
-# -----------------------------
-#  Environment Files
-# -----------------------------
-# If you have environment variables or secrets in a .env file
+# ------------------------------------------------------
+#  ENV / SECRETS
+# ------------------------------------------------------
 .env
 .env.*
 *.secret
 
-# -----------------------------
-#  OS Generated Files
-# -----------------------------
+# ------------------------------------------------------
+#  OS GENERATED FILES
+# ------------------------------------------------------
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# -----------------------------
-#  Other Logs & Temp Files
-# -----------------------------
+# ------------------------------------------------------
+#  OTHER LOGS & TEMP FILES
+# ------------------------------------------------------
 *.log
 *.temp
 *.tmp
 *.bak
-docs/
 *.old
 
-# -----------------------------
-#  Yarn / Node (if you have frontend or some Node scripts)
-# -----------------------------
+# You can remove "docs/" if you actually track docs
+docs/
+
+# ------------------------------------------------------
+#  NODE
+# ------------------------------------------------------
 node_modules/
 npm-debug.log
 yarn-error.log
 dist/
 build/
 
-# -----------------------------
-#  End of File
-# -----------------------------
+# ------------------------------------------------------
+#  MACHINE LEARNING & DATA ARTIFACTS
+# ------------------------------------------------------
+# Common large/binary file types in ML
+*.npy
+*.npz
+*.pkl
+*.h5
+*.pt
+*.pth
+*.model
+*.ckpt
+
+# If you have large CSV data you don't want to track:
+*.csv
+
+# If you want to keep small sample CSVs, remove *.csv above
+# and specifically ignore large scenario data files/folders.
+
+# Example: ignoring the entire "data" folder in verishield_ml_experiments
+verishield_ml_experiments/data_generators/data/
+
+### Notes:
+
+1. **Large Data Files**: By default, this `.gitignore` now excludes typical machine learning artifacts (`.npy`, `.npz`, `.pkl`, `.h5`, etc.) and **all CSV** files. If you do want to commit small CSVs or sample data, remove the `*.csv` rule or specify subfolders (like ignoring only `verishield_ml_experiments/data_generators/data/`).
+2. **Jupyter Notebook Checkpoints**: The `.ipynb_checkpoints/` pattern ensures no auto-saved checkpoints clutter your repo.
+3. **ML Models**: Adding `*.pt`, `*.pth`, and others helps avoid committing large trained models.
+4. **Local Docker Data**: Docker volumes (like `postgres_data/`, `neo4j_data/`) are excluded to prevent versioning ephemeral container data.
+5. **Environment Files**: `.env` and `.secret` are ignored for security reasons (sensitive credentials).
+
+Feel free to **customize** paths or remove any patterns that you actually need tracked in version control.
