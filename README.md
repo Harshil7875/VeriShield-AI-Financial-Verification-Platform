@@ -294,4 +294,4 @@ For questions, feature requests, or contributions:
 
 - **Maintainer**: [harshilbhandari01@gmail.com](mailto:harshilbhandari01@gmail.com)
 
-We welcome **feedback** and **pull requests** to drive innovation in financial identity verification, fraud detection, and risk assessment. **Happy building!**
+I welcome **feedback** and **pull requests** to drive innovation in financial identity verification, fraud detection, and risk assessment. **Happy building!**

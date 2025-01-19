@@ -1,6 +1,3 @@
-Below is an **updated** `.gitignore` that preserves your existing rules but adds **common exclusions** for large data artifacts, Jupyter outputs, and ML model files. Adjust any paths or extensions as needed for your specific workflow.
-
-```gitignore
 # ------------------------------------------------------
 #  PYTHON
 # ------------------------------------------------------
@@ -67,7 +64,6 @@ venv.bak/
 *.nbconvert/
 *.nb.html
 
-# Sometimes notebooks store large outputs:
 *.nb.data
 
 # ------------------------------------------------------
@@ -156,7 +152,6 @@ Desktop.ini
 *.bak
 *.old
 
-# You can remove "docs/" if you actually track docs
 docs/
 
 # ------------------------------------------------------
@@ -180,17 +175,11 @@ build/
 *.pth
 *.model
 *.ckpt
-
-# If you have large CSV data you don't want to track:
 *.csv
 
-# If you want to keep small sample CSVs, remove *.csv above
-# and specifically ignore large scenario data files/folders.
-
-# Example: ignoring the entire "data" folder in verishield_ml_experiments
-verishield_ml_experiments/data_generators/data/
 
 # ---------------------------------
 #  Others
 # ---------------------------------
+verishield_ml_experiments/data_generators/data/
 verishield_ml_experiments/documentations/brainstorm-gnn.md
