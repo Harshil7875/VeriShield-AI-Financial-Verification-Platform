@@ -1,6 +1,6 @@
 # VeriShield-ML-Experiments
 
-**VeriShield-ML-Experiments** is an open-source sandbox designed to **simulate KYC/KYB** environments and **experiment** with various fraud detection methods—ranging from **traditional ML** (XGBoost, Deep Learning) to **graph neural networks** (GNNs). By generating synthetic data under multiple fraud scenarios, it enables **realistic testing** of multi-owner or ring-based fraud patterns.
+**VeriShield-ML-Experiments** is an **extension** of the [**VeriShield-AI-Financial-Verification-Platform**](https://github.com/Harshil7875/VeriShield-AI-Financial-Verification-Platform) project, providing a **sandbox** for **synthetic KYC/KYB data generation** and **fraud detection experimentation**. By creating **realistic multi-owner or ring-based** fraud scenarios, it supports **XGBoost**, **Deep Learning**, and **Graph Neural Network** (GNN) approaches for more advanced or **graph-oriented** analysis.
 
 ---
 
@@ -26,21 +26,21 @@
 
 ## 1. Overview & Purpose
 
-This repository creates a **testbed** for fraud detection research:
+This sub-project **integrates** with the main VeriShield platform (Phase 4 of the [parent repo’s roadmap](https://github.com/Harshil7875/VeriShield-AI-Financial-Verification-Platform)). It focuses on:
 
-- **Synthetic Data**: Generates large-scale user and business datasets with **configurable** fraud rates and advanced collusion patterns (ring leaders, multi-owner).  
-- **EDA & Analysis**: Provides **notebooks** to explore missing data, suspicious IP usage, ring-based structures, etc.  
-- **Model Training**: Shows how to train **XGBoost** or **Keras** MLP models on tabular data to detect fraud labels.  
-- **Graph Workflows**: Prepares data for a **GNN** approach, capturing ring-fraud or multi-owner relationships more naturally than table-based ML.
+- **Synthetic Data**: Generates large-scale user and business datasets with **configurable** fraud rates and advanced collusion patterns (ring leaders, multi-owner, watchlist countries, etc.).  
+- **EDA & Analysis**: Provides **notebooks** for discovering suspicious signals like IP collisions, ring networks, and multi-owner businesses.  
+- **Model Training**: Demonstrates how to train **XGBoost** or **Keras** MLP models on tabular data for fraud detection.  
+- **Graph Workflows**: Prepares data for a **GNN** approach, capturing ring-fraud or multi-owner relationships more naturally than standard ML.
 
-The code is intended for **data scientists** and **engineers** who need a realistic environment for prototyping advanced fraud detection pipelines.
+**Use Case**: Data scientists or engineers can **prototype** advanced fraud detection pipelines here. Then, once models are refined, they can be **integrated** into the main VeriShield microservice or Kafka consumer for real-time scoring.
 
 ---
 
 ## 2. Directory Structure
 
 ```
-VeriShield-ML-Experiments/
+verishield_ml_experiments/
 ├── README.md                           <-- You are here!
 ├── data_generators/
 │   ├── refined_data_generator.py       <-- Main script for generating CSVs
@@ -67,16 +67,15 @@ VeriShield-ML-Experiments/
 └── requirements.txt
 ```
 
-- **`data_generators/`**:  
-  - **`refined_data_generator.py`**: core script for creating multi-pass fraud data.  
-  - **`data/`**: houses scenario-specific CSV outputs (e.g., `high_fraud`).  
-  - **`processed_gnn/`**: created after running GNN data prep, storing `.npy` arrays.  
-
-- **`notebooks/EDA/`**: Exploratory analysis of CSV outputs (e.g., `01-EDA-4.ipynb` for ring-leader checks).  
-- **`notebooks/Model_Training/`**:  
-  - **`01-GNN-DataPrep.ipynb`**: builds node features, edge lists for GNN usage.  
+- **`data_generators/`**:
+  - **`refined_data_generator.py`**: main generator for multi-pass fraud labeling.  
+  - **`data/`**: scenario-specific CSV outputs (`default`, `low_fraud`, `high_fraud`).  
+  - **`processed_gnn/`** subfolder: created after GNN data prep, storing `.npy` arrays.  
+- **`notebooks/EDA/`**: Exploratory notebooks analyzing CSV outputs.  
+- **`notebooks/Model_Training/`**:
+  - **`01-GNN-DataPrep.ipynb`**: builds node features & edges for GNN usage.  
   - **`02-Model-Training-8.ipynb`**: trains XGBoost on user-level fraud.  
-  - **`02-Model-Training-10.ipynb`**: trains a Keras MLP for fraud detection.
+  - **`02-Model-Training-10.ipynb`**: trains a Keras MLP on user-level fraud.
 
 ---
 
@@ -84,17 +83,19 @@ VeriShield-ML-Experiments/
 
 - **Python 3.8+** (3.11 recommended)  
 - **Conda** or **virtualenv** for isolation  
-- Install dependencies via:
+- Install dependencies:
   ```bash
   pip install -r requirements.txt
   ```
-- Key libraries:  
-  - **pandas, numpy, scikit-learn**  
-  - **imblearn** (oversampling)  
-  - **xgboost** (XGBoost model)  
-  - **tensorflow** (Keras for MLP)  
+- **Key Libraries**:
+  - `pandas`, `numpy`, `scikit-learn`  
+  - `imblearn` (oversampling)  
+  - `xgboost` (for XGBoost training)  
+  - `tensorflow` (Keras MLP)  
 
-*(Optional)*: If doing **GNN** experimentation, install **PyTorch Geometric** or **DGL**.
+*(Optional)*: If exploring **GNN** usage, install **PyTorch Geometric** or **DGL**.
+
+> For **deployment** or **event-driven** integration, see the main [VeriShield-AI-Financial-Verification-Platform](https://github.com/Harshil7875/VeriShield-AI-Financial-Verification-Platform) repo.
 
 ---
 
@@ -102,37 +103,34 @@ VeriShield-ML-Experiments/
 
 ### Refined Data Generator
 
-- **Script**: `data_generators/refined_data_generator.py`  
-- **Purpose**: Produces large user/business datasets with multi-pass fraud labeling. Incorporates ring leaders, multi-owner edges, watchlist countries, etc.
+- **Script**: `data_generators/refined_data_generator.py`
+- **Highlights**:
+  1. **Multi-Pass Labeling**: user/business fraud influences each other over multiple iterations.  
+  2. **Ring Leaders**: ~0.5% of users become ring leaders, linking to multiple other users.  
+  3. **Ownership Edges**: users can own multiple businesses, creating multi-owner webs.
 
-**Command Example**:
+**Usage Example**:
 ```bash
 cd data_generators
 python refined_data_generator.py --scenario high_fraud \
   --num-users 100000 --num-businesses 10000 \
   --iterations 2 --seed 42
 ```
-Generates **4 CSVs** in `data_generators/data/high_fraud/`:
-- `synthetic_users.csv`, `synthetic_businesses.csv`  
-- `user_business_relationships.csv`, `user_user_relationships.csv`
+Generates 4 CSVs (e.g., `synthetic_users.csv`, `synthetic_businesses.csv`, etc.) in `data_generators/data/high_fraud/`.
 
 ### Scenarios & Outputs
 
-- **Scenarios**: `default`, `low_fraud`, `high_fraud`.  
-- **Outputs**: user columns (`segment`, `fraud_label`, etc.), business columns (`registration_country`, etc.), plus ring leaders & ownership edges.  
-- Multi-pass logic means user labels influence business labels across multiple iterations.
+- **Scenarios**: `default`, `low_fraud`, `high_fraud` (modify base fraud rates).  
+- **Outputs**: user columns (`segment`, `fraud_label`, etc.), business columns (`registration_country`, etc.), plus ring leader and ownership edges.  
+- Adjust `--iterations` to increase label cross-influence.
 
 ---
 
 ## 5. Exploratory Data Analysis
 
-In `notebooks/EDA/`:
-
-1. **`01-EDA-2.ipynb`, `01-EDA-3.ipynb`, `01-EDA-4.ipynb`**:  
-   - Load scenario CSVs, check distributions, ring-leader stats, suspicious signals.  
-   - Verify missing data or out-of-range IDs are handled properly.  
-
-These notebooks help confirm **data quality** and reveal suspicious patterns (IP collisions, ring leaders, multi-owner businesses) before modeling.
+- **EDA Notebooks**: In `notebooks/EDA/` (`01-EDA-2.ipynb`, `01-EDA-3.ipynb`, `01-EDA-4.ipynb`).  
+- Inspect: ring-leader frequency, IP collisions, watchlist countries, business fraud distribution, etc.  
+- Confirms data integrity before proceeding to model training.
 
 ---
 
@@ -142,24 +140,22 @@ These notebooks help confirm **data quality** and reveal suspicious patterns (IP
 
 - **Notebook**: `02-Model-Training-8.ipynb`
 - **Steps**:
-  1. **Load** `synthetic_users_enriched.csv`.  
-  2. **Feature Engineering**: phone length, IP flags, watchlist, etc.  
-  3. **Split & Oversampling**: upsample minority fraud class.  
-  4. **Hyperparameter Tuning**: uses `RandomizedSearchCV` for `max_depth`, `learning_rate`, `n_estimators`, etc.  
-  5. **Evaluation**: threshold-based metrics (precision/recall), PR AUC.
+  1. Load an enriched CSV (e.g., `synthetic_users_enriched.csv`).  
+  2. Feature engineering (phone length, suspicious IP/email, etc.).  
+  3. Split & oversample.  
+  4. Tune hyperparams with `RandomizedSearchCV`.  
+  5. Evaluate with threshold-based metrics (precision, recall, PR AUC).
 
 ### Deep Learning (Keras)
 
 - **Notebook**: `02-Model-Training-10.ipynb`
 - **Steps**:
-  1. **Load** `synthetic_users_enriched.csv`.  
-  2. **Feature Engineering**: create numeric fields for suspicious signals.  
-  3. **Train/Test Split** & scaling.  
-  4. **Oversampling** with `RandomOverSampler`.  
-  5. **MLP**: multiple dense layers, dropout, early stopping.  
-  6. **Evaluate** at multiple thresholds, track confusion matrix, PR AUC, etc.
+  1. Load and preprocess data similarly.  
+  2. Build a Keras MLP (dense layers + dropout).  
+  3. Train with early stopping; evaluate at multiple thresholds.  
+  4. Typically sees moderate performance (~50–60% accuracy).
 
-Both pipelines show **moderate** results (50–60% accuracy, PR AUC ~0.4–0.5), highlighting the **complex** nature of ring-based fraud. Real gains often require **graph-based** features.
+Both approaches highlight **imbalance** and **complex collusion** patterns—why GNN or advanced feature engineering can help.
 
 ---
 
@@ -167,30 +163,35 @@ Both pipelines show **moderate** results (50–60% accuracy, PR AUC ~0.4–0.5),
 
 ### Notebook & Process
 
-- **Notebook**: `01-GNN-DataPrep.ipynb`
-- **Purpose**: Converts your CSV data into node features, edge lists, and optional train/val/test splits for GNN usage.
+- **`01-GNN-DataPrep.ipynb`**: transforms your CSV data into node feature matrices, edge lists, and optional train/val/test masks for user nodes.
 
 **Key Steps**:
-1. **Load** users, businesses, and relationship CSVs.  
-2. **Validate** IDs (no out-of-range references).  
-3. **Feature Engineer** user and business columns (suspicious phone, watchlist countries, ring-leader flags).  
-4. **Construct** `edge_user_user` and `edge_user_biz` arrays; assign 0-based IDs for users/businesses.  
-5. **Save** `.npy` files (e.g., `user_features.npy`, `biz_features.npy`, `edge_user_user.npy`, `edge_user_biz.npy`).  
-6. (Optional) Create masks (`train_mask_users.npy`) if you plan to classify user nodes.
+1. Load raw CSVs (`synthetic_users.csv`, etc.).  
+2. Validate IDs, drop out-of-range references.  
+3. Create numeric or boolean features (ring leader, suspicious phone, etc.).  
+4. Build adjacency arrays for **user–user** and **user–business**.  
+5. Save `.npy` arrays (e.g., `user_features.npy`, `edge_user_user.npy`) under `processed_gnn/`.
 
 ### Using the Generated Graph Data
 
-- **Hetero Graph**: If you use PyTorch Geometric or DGL, you can store two node types (“user”, “business”) and two edge types (“user_user”, “user_business”).  
-- **Monolithic Graph**: Combine all nodes in one index space, but typically less flexible.  
-- **Custom Features**: Extend the script if you want to create IP or device nodes, or incorporate edge weights for partial ownership.
+- **PyTorch Geometric** or **DGL**: create a heterograph with two node types (`user`, `business`) and two edge types (`user_user`, `user_business`).  
+- Explore ring-based or multi-owner fraud detection in a more natural, multi-hop fashion.
 
 ---
 
 ## 8. Future Directions
 
-1. **Advanced Graph Features**: Turn IP addresses, devices into separate node types for deeper ring detection.  
-2. **Temporal GNN**: If sign-up or transaction timestamps matter, adopt dynamic or rolling graph approaches.  
-3. **New Fraud Scenarios**: Instead of extreme (`high_fraud ~98% biz fraud`), define balanced or moderate distributions.  
-4. **Production Scale**: For millions of entities, consider chunked generation, out-of-memory data handling, or distributed GNN training.
+1. **Advanced Graph Features**: IP addresses or devices as separate nodes.  
+2. **Temporal GNN**: incorporate timestamps for sign-up or ownership changes.  
+3. **Scenario Diversity**: beyond `high_fraud`, create mid-level or time-based scenarios.  
+4. **Production Scale**: for millions of nodes, consider chunked generation or distributed GNN training.
 
 ---
+
+## 9. License
+
+Provided under the **MIT License**—see [LICENSE](LICENSE). We welcome **feedback** and **pull requests**, especially around **fraud scenario expansion**, **graph transformations**, or **advanced model experiments**!
+
+---
+
+**Note**: For **deployment** or **real-time inference** details, refer to the [parent VeriShield repo](https://github.com/Harshil7875/VeriShield-AI-Financial-Verification-Platform), which implements FastAPI, Kafka, Neo4j, and a microservices architecture. This sub-project **focuses** on offline data generation, EDA, and ML prototyping—**tying** into the main system’s event-driven flows (Phase 4) once models are ready.
