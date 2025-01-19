@@ -188,10 +188,4 @@ Both approaches highlight **imbalance** and **complex collusion** patterns—why
 
 ---
 
-## 9. License
-
-Provided under the **MIT License**—see [LICENSE](LICENSE). We welcome **feedback** and **pull requests**, especially around **fraud scenario expansion**, **graph transformations**, or **advanced model experiments**!
-
----
-
 **Note**: For **deployment** or **real-time inference** details, refer to the [parent VeriShield repo](https://github.com/Harshil7875/VeriShield-AI-Financial-Verification-Platform), which implements FastAPI, Kafka, Neo4j, and a microservices architecture. This sub-project **focuses** on offline data generation, EDA, and ML prototyping—**tying** into the main system’s event-driven flows (Phase 4) once models are ready.
