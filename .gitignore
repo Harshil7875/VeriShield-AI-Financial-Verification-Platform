@@ -190,12 +190,7 @@ build/
 # Example: ignoring the entire "data" folder in verishield_ml_experiments
 verishield_ml_experiments/data_generators/data/
 
-### Notes:
-
-1. **Large Data Files**: By default, this `.gitignore` now excludes typical machine learning artifacts (`.npy`, `.npz`, `.pkl`, `.h5`, etc.) and **all CSV** files. If you do want to commit small CSVs or sample data, remove the `*.csv` rule or specify subfolders (like ignoring only `verishield_ml_experiments/data_generators/data/`).
-2. **Jupyter Notebook Checkpoints**: The `.ipynb_checkpoints/` pattern ensures no auto-saved checkpoints clutter your repo.
-3. **ML Models**: Adding `*.pt`, `*.pth`, and others helps avoid committing large trained models.
-4. **Local Docker Data**: Docker volumes (like `postgres_data/`, `neo4j_data/`) are excluded to prevent versioning ephemeral container data.
-5. **Environment Files**: `.env` and `.secret` are ignored for security reasons (sensitive credentials).
-
-Feel free to **customize** paths or remove any patterns that you actually need tracked in version control.
+# ---------------------------------
+#  Others
+# ---------------------------------
+verishield_ml_experiments/documentations/brainstorm-gnn.md
