@@ -10,7 +10,7 @@
 2. [Directory Structure](#directory-structure)  
 3. [Prerequisites & Environment](#prerequisites--environment)  
 4. [Data Generation Workflow](#data-generation-workflow)  
-   - [Refined Data Generator (Extended)](#refined-data-generator-extended)  
+   - [Synergy-Based Data Generation (`data-gen-v1.py`)](#synergy-based-data-generation-data-gen-v1py)  
    - [Scenarios & Outputs](#scenarios--outputs)  
 5. [Exploratory Data Analysis](#exploratory-data-analysis)  
 6. [Model Training & Results](#model-training--results)  
@@ -29,8 +29,8 @@ This sub-project **integrates** with the main VeriShield platform (Phase 4 of th
 
 - **Synthetic Data**: Generates large-scale user, **business**, and optional **IP** node data with **configurable** fraud rates and advanced collusion patterns (ring leaders, multi-owner webs, watchlist countries, suspicious IP collisions, etc.).  
 - **EDA & Analysis**: Provides **notebooks** for discovering suspicious signals like ring networks, multi-owner businesses, or blacklisted IP triggers.  
-- **Model Training**: Demonstrates how to train **XGBoost** or **Keras** MLP models on tabular data, plus advanced **GNN** workflows (heterogeneous graph, multi-edge).  
-- **Multi-Pass Synergy**: The extended generator script can run multiple labeling passes so user/business/IP fraud labels reinforce each other, mimicking real-world ring-based fraud.
+- **Model Training**: Demonstrates how to train **XGBoost** or **Keras** MLP models on tabular data, plus advanced **GNN** workflows (heterogeneous graph, multi-edge) for ring-fraud detection.  
+- **Synergy-Based Labeling**: Allows multi-pass user/business/IP labeling so entities reinforce each other’s fraud probability, **mimicking real-world ring-based** scenarios.
 
 **Real-World Use Case**: Data scientists can **prototype** ring-fraud detection pipelines here, then **deploy** them into the main VeriShield microservices for real-time inference or event-driven (Kafka) processing.
 
@@ -42,25 +42,17 @@ This sub-project **integrates** with the main VeriShield platform (Phase 4 of th
 verishield_ml_experiments/
 ├── README.md                        <-- You are here!
 ├── data_generators/
-│   ├── refined_data_generator.py    <-- Original generator
-│   ├── refined_data_generator_extended.py <-- Extended for IP nodes & synergy
+│   ├── data-gen-v1.py              <-- "Ideal" synergy-based generator (near 50% final fraud)
+│   ├── refined_data_generator_extended.py <-- older extended generator
 │   ├── data/
 │   │   ├── medium_fraud/
-│   │   │   ├── synthetic_users.csv
-│   │   │   ├── synthetic_businesses.csv
-│   │   │   ├── ip_nodes.csv
-│   │   │   ├── processed_gnn/
-│   │   │   │   ├── user_features.npy
-│   │   │   │   ├── biz_features.npy
-│   │   │   │   ├── ip_features.npy
-│   │   │   │   ├── user_labels.npy
-│   │   │   │   ├── biz_labels.npy
-│   │   │   │   ├── ip_labels.npy
-│   │   │   │   ├── ...
-│   │   │   ├── user_user_relationships.csv
-│   │   │   ├── user_business_relationships.csv
-│   │   │   └── user_ip_relationships.csv
+│   │   ├── high_fraud/
 │   │   └── ...
+│   ├── data-v1/
+│   │   ├── medium_fraud/
+│   │   ├── high_fraud/
+│   │   └── ...
+│   └── ...
 ├── documentations/
 │   ├── data-gen-readme.md
 │   ├── eda-readme.md
@@ -70,8 +62,8 @@ verishield_ml_experiments/
 │   │   ├── 02-GNN-DataPrep-EDA-1.ipynb   <-- EDA on GNN data (user/biz/IP)
 │   │   └── ...
 │   └── Model_Training/
-│       ├── 01-GNN-DataPrep-2.ipynb      <-- builds .npy features, edges for GNN
-│       ├── 02-Model-Training-GNN-PyTorch-3.ipynb  <-- multi-edge GNN approach
+│       ├── 01-GNN-DataPrep-3.ipynb      <-- builds .npy features, edges for GNN
+│       ├── 02-Model-Training-GNN-PyTorch-4.ipynb  <-- multi-edge GNN approach
 │       ├── 02-Model-Training-8.ipynb    <-- XGBoost approach (tabular)
 │       ├── 02-Model-Training-10.ipynb   <-- Keras MLP approach (tabular)
 └── requirements.txt
@@ -99,36 +91,36 @@ verishield_ml_experiments/
 
 ## **4. Data Generation Workflow**
 
-### **Refined Data Generator (Extended)**
+### **Synergy-Based Data Generation (`data-gen-v1.py`)**
 
-- **Script**: `refined_data_generator_extended.py`
+- **Script**: `data-gen-v1.py`
 - **Highlights**:
-  1. **Multi-Pass Labeling**: user/business fraud influences each other, plus optional IP synergy.  
-  2. **Ring Leaders & Multi-Owner**: 0.5% ring leaders with user→user edges, ~40% users own 1–10 businesses, etc.  
-  3. **IP Nodes**: If `--num-ips N > 0`, you also generate `ip_nodes.csv` + user→IP edges.  
-  4. **Scenarios**: `low_fraud`, `medium_fraud`, `extreme_fraud`, etc. with varying base rates.
+  1. **Iterative Convergence to ~50% Fraud**: Adjusts base rates each pass so users/businesses/IPs collectively approach 50% fraud (±2%).  
+  2. **Ring & Multi-Owner**: e.g., 0.5% ring leaders, 40% of users own multiple businesses, plus IP collisions.  
+  3. **Synergy**: user↔biz↔ip synergy repeats until stable.  
+  4. **Scenarios**: `low_fraud`, `medium_fraud`, `high_fraud`, etc. start at different base rates.  
+  5. **Final CSVs**: `synthetic_users.csv`, `synthetic_businesses.csv`, `ip_nodes.csv`, plus relationship files.
 
 **Example**:
 ```bash
 cd data_generators
-python refined_data_generator_extended.py \
-    --scenario medium_fraud \
-    --num-users 100000 \
+python data-gen-v1.py \
+    --scenario high_fraud \
+    --num-users 50000 \
     --num-businesses 10000 \
-    --num-ips 5000 \
-    --iterations 2 \
-    --seed 42 \
-    --output-dir ./data
+    --num-ips 8000 \
+    --seed 999 \
+    --output-dir ./data-v1
 ```
-Generates CSVs plus any .npy arrays (after data prep in a separate notebook).
+Generates synergy-based CSVs in `./data-v1/high_fraud/`.
 
 ### **Scenarios & Outputs**
 
-- **Scenarios**: e.g. `default`, `medium_fraud`, `high_fraud`, `ultra_low_fraud`.  
+- **Scenarios**: `low_fraud`, `default`, `medium_fraud`, `high_fraud`, `extreme_fraud`.  
 - **Outputs**:  
   - `synthetic_users.csv`, `synthetic_businesses.csv`, `ip_nodes.csv`  
   - `user_user_relationships.csv`, `user_business_relationships.csv`, `user_ip_relationships.csv`  
-  - **(Optional)** `processed_gnn/` with `.npy` arrays for GNN usage (if you run the GNN prep notebook).
+  - Each scenario in a subfolder, e.g. `data-v1/medium_fraud/`.
 
 ---
 
@@ -136,122 +128,50 @@ Generates CSVs plus any .npy arrays (after data prep in a separate notebook).
 
 - **EDA Notebooks** in `notebooks/EDA/`:  
   - Check shapes, label distribution, suspicious ring edges, IP collisions.  
-  - Confirm data integrity (no out-of-range IDs, ~2–3 new node types, etc.).
+  - Confirm data integrity (no out-of-range IDs, synergy-based or near-50% final rates, etc.).
 
 ---
 
 ## **6. Model Training & Results**
 
-We tested multiple approaches on the synthetic data (e.g., `medium_fraud` scenario with ~100k users, 10k businesses, 5k IPs). **Below** are summarized results.
-
----
+After generating CSVs, **convert** them into `.npy` arrays for GNN usage with a `01-GNN-DataPrep-*.ipynb`.  
+Then train with `02-Model-Training-*` notebooks (XGBoost, MLP, or GNN).
 
 ### **XGBoost (Tabular)**
 
-**Notebook**: `02-Model-Training-8.ipynb`
-
-1. **Data**  
-   - ~1.5 million user records (enriched). Splits: 80/20 → **1.2M** train vs. **300k** test. Fraud ratio ~ 38%.  
-   - Feature engineering: ~10–14 numeric/ordinal features (e.g. `gender`, `phone_len`, `email_domain_enc`, `ip_count`).  
-   - Class imbalance: oversampled train set to 50/50.  
-2. **Hyperparameter Search**  
-   - `RandomizedSearchCV` with `learning_rate`, `max_depth`, `n_estimators`, etc.  
-   - Best config e.g.: 
-     ```python
-     {
-       'subsample': 0.9,
-       'n_estimators': 500,
-       'max_depth': 8,
-       'learning_rate': 0.1,
-       'colsample_bytree': 1.0
-     }
-     ```
-3. **Final Performance (Threshold=0.5)**  
-   - **Accuracy**: ~57%  
-   - **Precision** (fraud=1): ~45–46%  
-   - **Recall** (fraud=1): ~58–59%  
-   - **F1**: ~0.51  
-   - **AUC-PR** (probabilities): ~0.43–0.44  
-
-*(Note: Setting threshold to 0.3 yields ~100% recall but ~38% precision, threshold 0.7 yields ~0% recall but ~99% legit precision.)*
-
----
+- **Notebook**: `02-Model-Training-8.ipynb`
+- Typically ~57–58% user accuracy on a 38% base fraud scenario.  
+- Class imbalance solutions (oversampling, threshold tuning) crucial.
 
 ### **Deep Learning (Keras MLP)**
 
-**Notebook**: `02-Model-Training-10.ipynb`
-
-1. **Data**  
-   - Similarly ~1.5M user records, ~38% fraud.  
-   - Feature set: 14 numeric columns. Oversampled 1.2M→~1.48M.  
-   - MLP with 4 hidden layers × 128 units + dropout.  
-2. **Training**  
-   - 5–10 epochs, early stopping on validation loss.  
-   - Because of over-sampling, careful threshold tuning is essential.  
-3. **Results** (Threshold=0.5)  
-   - **Accuracy**: ~57–58%  
-   - **Precision**: ~45–46%  
-   - **Recall**: ~58–60%  
-   - **F1**: ~0.51–0.52  
-   - **AUC-PR**: ~0.45  
-
-*(Similar performance to XGBoost, with some variation in threshold-based metrics.)*
-
----
+- **Notebook**: `02-Model-Training-10.ipynb`
+- Similar performance to XGBoost (~57–58% accuracy).  
+- Can be more flexible with hidden layers, dropout.
 
 ### **Graph Neural Networks (GNN)**
 
-**Data Prep**: `01-GNN-DataPrep-2.ipynb` → merges CSV into `.npy` features & edges, e.g. `(user, business, ip)` node sets plus edges:
-
-- `(user, 'user_user', user)`
-- `(user, 'user_business', business)`
-- `(user, 'user_ip', ip)`
-- Reversed edges for business→user, ip→user if you want full message passing.
-
-#### **Notebook**: `02-Model-Training-GNN-PyTorch-3.ipynb`
-
-1. **Multi-Edge, Multi-Task**  
-   - Possibly classifying `user.fraud_label`, `business.fraud_label`, `ip.fraud_label`.  
-   - HeteroConv with SAGEConv on each relation.  
-2. **Example Results**  
-   - On a ~**100k users, 10k biz, 5k IP** scenario:  
-     - **User Val Accuracy** ~ **74–75%** (some runs reached ~78%).  
-     - **Biz Accuracy** typically higher (~95%+ for the scenario’s distribution).  
-     - **IP** classification can be near 100% if the generator’s IP label logic is simpler or if few IP nodes are flagged as suspicious.  
-3. **Thresholds**  
-   - For user classification, ~74–78% accuracy might correspond to ~**74–75%** recall at moderate precision, or vice versa.  
-   - The synergy of ring leaders + suspicious IP can yield a bigger improvement vs. purely tabular.  
-
-*(Exact metrics vary by scenario, random seeds, number of IP nodes, synergy passes, etc.)*
-
----
+- **Notebook**: `02-Model-Training-GNN-PyTorch-4.ipynb` (extended for multi-task IP).
+- Builds a **heterogeneous** graph with user, business, IP node types.  
+- Multi-edge synergy can significantly improve user-level or business-level fraud detection if ring or IP collisions are strong.
 
 ### **Summary of Findings**
 
-- **Tabular** (XGBoost / MLP) 
-  - ~57–58% accuracy, ~0.51–0.52 F1, ~0.43–0.45 PR-AUC, given a ~38% base fraud scenario.  
-- **GNN** (multi-edge) 
-  - Potentially **higher** user-level accuracy (74–78%), especially if ring-based or IP-based synergy is strong in the data.  
-  - Multi-task business classification can reach ~96–97% accuracy if scenario strongly correlates fraudulent owners to biz labels.  
-  - IP classification might be near ~99–100% if the generator’s IP logic is simpler or IP coverage is smaller.
-
-*(Your exact results may differ by random seed, scenario settings, hyperparam choices, or synergy passes.)*
+- **Tabular**: ~57–60% user accuracy, can be boosted with heavy feature engineering.  
+- **GNN**: Often yields higher synergy-based accuracy for users, can exceed 70–75% if ring or IP collusion is strong. Business classification might reach 90–95% if watchlist or multiple owners strongly correlate. IP classification depends on whether IP has real features or synergy alone.
 
 ---
 
 ## **7. Future Directions**
 
 1. **Temporal & Incremental**  
-   - Add timestamps for user signups, business creation, IP usage. Possibly use **temporal GNN** or time-based feature engineering.  
-2. **Node or Edge-Level Richness**  
-   - Store transaction volumes, device fingerprint overlaps, ring expansions.  
-   - If you have real or pseudo data, incorporate partial subgraphs for advanced ring detection.  
-3. **Scalability**  
-   - For very large user sets (1M+), use **Neighbor Sampling** in PyTorch Geometric for mini-batch training.  
-   - Explore containerized or distributed solutions if data grows further.  
-4. **Metric Priorities**  
-   - Real fraud detection often prioritizes **recall** for suspicious accounts or a cost-based approach (balance false positives with false negatives).  
-   - Adjust thresholds or train for precision/recall trade-offs that suit real-world production risk appetites.
+   - Add timestamps or daily signups, enabling time-based synergy or temporal GNN.  
+2. **Scalability**  
+   - For huge data (1M+ users), implement mini-batching or neighbor sampling in PyTorch Geometric.  
+3. **IP Feature Enrichment**  
+   - Currently, IP features are often Nx0. Add geolocation, blacklisted ranges, usage frequency, etc.  
+4. **Real Hybrid Data**  
+   - If partial real data is available, integrate subgraphs into the synergy approach.
 
 ---
 

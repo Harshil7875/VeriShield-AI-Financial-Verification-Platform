@@ -184,3 +184,4 @@ build/
 verishield_ml_experiments/data_generators/data/
 verishield_ml_experiments/data_generators/data-huge/
 verishield_ml_experiments/documentations/brainstorm-gnn.md
+verishield_ml_experiments/data_generators/data-v1
