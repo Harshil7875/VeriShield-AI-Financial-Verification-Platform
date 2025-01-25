@@ -1,6 +1,6 @@
 # **Notebook: `02-Model-Training-GNN-PyTorch-5.ipynb`** 
 
-This README presents **multi-task GNN** training results on a **“high_fraud”** synthetic dataset generated via **`data-gen-v1.py`**. The data was then transformed into GNN-ready arrays (`.npy` files) using **`01-GNN-DataPrep-3.ipynb`**, and finally trained via a **PyTorch Geometric** notebook (`02-Model-Training-GNN-PyTorch-4.ipynb`).
+This README presents **multi-task GNN** training results on a **“high_fraud”** synthetic dataset generated via **`data-gen-v1.py`**. The data was then transformed into GNN-ready arrays (`.npy` files) using **`01-GNN-DataPrep-3.ipynb`**, and finally trained via a **PyTorch Geometric** notebook (`02-Model-Training-GNN-PyTorch-5.ipynb`).
 
 ## **1. Dataset Overview**
 
